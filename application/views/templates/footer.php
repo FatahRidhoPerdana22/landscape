@@ -18,7 +18,6 @@
     </div>
 
     <!-- JavaScript Libraries -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -105,7 +104,7 @@
     </script>
     <script>
         // Fungsi untuk mengirim permintaan AJAX ke server
-        function sendDataToServer() {
+        function realTime() {
             // Kirim permintaan AJAX ke method 'getDataSensor' di Controller Monitoring
             $.ajax({
                 url: "<?php echo base_url('Monitoring/getDataSensor'); ?>",
@@ -116,13 +115,13 @@
                     $("#valuePh").text(response.sensor_ph);
                     $("#valueLembab").text(response.sensor_lembab);
                     $("#timestamp").text(response.timestamp);
-                    setTimeout(sendDataToServer, 2000)
+                    setTimeout(realTime, 2000)
                 }
             });
         }
 
         // Panggil fungsi sendDataToServer setiap 5 detik
-        sendDataToServer()
+        realTime()
 </script>
 </body>
 

@@ -1,7 +1,11 @@
-// DEFINE PIN
-#define analogMoiture A0
-#define analogPh A2
-#define digitalPompa 7
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#define analogMoisture A0
+#define analogPh D4
+
+const char* ssid = "....."; // Ganti dengan SSID WiFi Anda
+const char* password = "......"; // Ganti dengan password WiFi Anda
+const char* serverUrl = "http://ipaddress/landscape/Monitoring/receiveDataFromESP"; // Ganti dengan URL endpoint Anda
 
 // DEFINE PENGUKURAN TERENDAH DAN TERTINGGI
 const int dry = 584;
@@ -12,43 +16,58 @@ float slope = -0.0139; // koefisien kemiringan (slope) dari garis linear yang me
 float offset = 7.7851; // pergeseran (offset) dari garis linear tersebut
 float ph = 0.0;
 
-// KALKULASI
-const float minPh = 6.5; // Ambang pH minimum 
-const int minMoisture = 50; // Ambang kelembapan minimum
+WiFiClient client;
 
 void setup() {
   Serial.begin(9600);
-  pinMode(digitalPompa, OUTPUT);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  
+  Serial.println("Connected to WiFi");
 }
 
 void loop() {
   // BACA DATA ANALOG
-  int lembab = analogRead(analogMoiture);
+  int kelembapan = analogRead(analogMoisture);
   int asam = analogRead(analogPh);
 
   // SENSOR MOISTURE
-  int kelembapanPersen = map(lembab, dry, wet, 0, 100);
+  int lembab = ( 100 - ( (kelembapan/1023.00) * 100 ) );
+  lembab = constrain(lembab, 0, 100);
 
-  Serial.print("Kelembapan : ");
+  Serial.print("Lembab : ");
   Serial.println(lembab);
 
-  Serial.print("Persen : ");
-  Serial.println(kelembapanPersen);
-
-  // SENSOR Ph
   ph = (slope * asam) + offset;
-
   Serial.print("Ph : ");
   Serial.println(ph);
 
-  // LOGIC
-  if (ph < minPh && kelembapanPersen < minMoisture) {
-    digitalWrite(digitalPompa, HIGH);
-    Serial.println("Mengaktifkan Pompa");
+  // Buat payload untuk dikirim ke server
+  String payload = "ph=" + String(ph) + "&lembab=" + String(lembab);
+
+  // Mulai koneksi HTTP
+  HTTPClient http;
+  http.begin(client, serverUrl);
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+  // Kirim data ke server dengan metode HTTP POST
+  int httpResponseCode = http.POST(payload);
+
+  // Cek status respons dari server
+  if (httpResponseCode > 0) {
+    Serial.print("HTTP Response code: ");
+    Serial.println(httpResponseCode);
   } else {
-    digitalWrite(digitalPompa, LOW); 
-    Serial.println("Mematikan Pompa");
+    Serial.print("Error code: ");
+    Serial.println(httpResponseCode);
   }
 
-  delay(1000);
+  // Akhiri koneksi HTTP
+  http.end();
+
+  delay(2000); // Tunggu selama 5 detik sebelum mengirim data lagi
 }
