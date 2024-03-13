@@ -11,7 +11,6 @@ const char* serverUrl = "http://ipaddress/landscape/Monitoring/receiveDataFromES
 const int dry = 584;
 const int wet = 211;
 
-// DEFINE PERHITUNGAN Ph dari Analog
 float slope = -0.0139; // koefisien kemiringan (slope) dari garis linear yang menghubungkan nilai ADC dengan nilai pH.
 float offset = 7.7851; // pergeseran (offset) dari garis linear tersebut
 float ph = 0.0;
@@ -37,7 +36,6 @@ void loop() {
 
   // SENSOR MOISTURE
   int lembab = ( 100 - ( (kelembapan/1023.00) * 100 ) );
-  lembab = constrain(lembab, 0, 100);
 
   Serial.print("Lembab : ");
   Serial.println(lembab);
